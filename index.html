@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
 <title>Dinner Wheel</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1135,10 +1136,20 @@ function coverNode(b,tag,bare,props){
 }
 function newRecipe(){ ui.draft=null; ui.editId=null; ui.review=false; ui.addMode='type'; go('add'); }
 function addToBook(name){ ui.lastBook=name; ui.draft=null; ui.editId=null; ui.review=false; ui.addMode='type'; go('add'); }
+let vtBusy=false;
 function withTransition(update,el){
-  if(el) el.style.viewTransitionName='book-cover';
+  // A new transition while one is running force-finishes the old one, which is the "snappy" glitch.
+  // Ignore taps until the current one has settled.
+  if(vtBusy) return;
   if(REDUCED||!document.startViewTransition){ update(); return; }
-  try{ document.startViewTransition(update); }catch(e){ update(); }
+  if(el) el.style.viewTransitionName='book-cover';
+  try{
+    vtBusy=true;
+    const t=document.startViewTransition(update);
+    const done=()=>{ vtBusy=false; if(el) el.style.viewTransitionName=''; };
+    t.finished.then(done,done);
+    setTimeout(()=>{ vtBusy=false; },900);
+  }catch(e){ vtBusy=false; update(); }
 }
 function openBook(name,el){
   withTransition(()=>{ ui.book=name; ui.q=''; ui.fp='all'; ui.ff=false; ui.enter=true; render(); window.scrollTo(0,0); },el);
@@ -1389,6 +1400,3 @@ document.getElementById('today-label').textContent=new Date().toLocaleDateString
 ui.tab=tabFromHash()||'week';
 render();
 </script>
-
-</body>
-</html>
