@@ -735,6 +735,7 @@ const IC={
   list:'<path d="M8.5 6.5H20M8.5 12H20M8.5 17.5H20"/><circle cx="4.5" cy="6.5" r=".9"/><circle cx="4.5" cy="12" r=".9"/><circle cx="4.5" cy="17.5" r=".9"/>',
   edit:'<path d="M4 20h4L19.2 8.8a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 6.5l3 3"/>',
   print:'<path d="M7 9V4.5h10V9"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v5.5H7z"/>',
+  moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   chev:'<path d="M6 9l6 6 6-6"/>',
   camera:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-2h5.6L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.3"/>',
@@ -1089,7 +1090,7 @@ function slotRow(i,todayIdx){
     h('div',{class:'dow',text:DAYS[i]}),main,
     h('div',{class:'slot-actions'},
       h('button',{class:'icon-btn',type:'button','aria-label':'Choose a dinner for '+DAYS_FULL[i],onclick:()=>openPicker(i)},icon('list')),
-      h('button',{class:'icon-btn',type:'button','aria-label':'Spin the wheel for '+DAYS_FULL[i],disabled:locked,onclick:()=>openWheel(i)},icon('spin')),
+      h('button',{class:'icon-btn',type:'button','aria-label':'Not cooking on '+DAYS_FULL[i],disabled:locked,onclick:()=>openPicker(i,'off')},icon('moon')),
       h('button',{class:'icon-btn',type:'button','aria-label':(locked?'Unlock ':'Lock ')+DAYS_FULL[i],'aria-pressed':String(locked),disabled:!r,onclick:()=>toggleLock(i)},icon(locked?'lock':'unlock'))));
 }
 function rulesPanel(){
@@ -1117,14 +1118,15 @@ function viewWeek(){
   const counts={}; P.slots.forEach((id,i)=>{ const r=P.active[i]&&byId(id); if(r) counts[r.protein]=(counts[r.protein]||0)+1; });
   return h('section',{class:'view'},
     h('div',{class:'field'},h('h1',{class:'view-title',text:'This week'}),h('p',{class:'sub',text:activeN?planned+' of '+activeN+' dinners planned'+(activeN<7?' \u00B7 '+(7-activeN)+' off':''):'Every night is off. Tap a day to cook.'})),
+    planned?h('button',{class:'btn big',type:'button',onclick:()=>go('shop')},icon('cart',22),'Build shopping list'):null,
+    rulesPanel(),
     h('div',{class:'days',role:'group','aria-label':'Nights to plan'},DAYS.map((d,i)=>h('button',{type:'button',class:'day'+(i===todayIdx?' today':''),'aria-pressed':String(P.active[i]),'aria-label':DAYS_FULL[i],text:d,onclick:()=>toggleNight(i)}))),
     h('button',{class:'btn primary big',type:'button',disabled:ui.spinning||!activeN,onclick:spinWeek},icon('spin',24),planned?'Spin again':'Spin the week'),
     h('p',{class:'hint',text:lockedN?lockedN+' locked '+(lockedN>1?'nights stay':'night stays')+' as '+(lockedN>1?'they are.':'it is.'):'Choose a dinner yourself or spin. Locked nights stay put when you spin again.'}),
     ui.notes.map(n=>h('p',{class:'note',text:n})),
     h('div',{class:'slots'},DAYS.map((_,i)=>slotRow(i,todayIdx))),
     planned?h('div',{class:'mixrow'},h('span',{class:'label',text:'Protein mix'}),Object.entries(counts).map(([p,n])=>h('span',{class:'pill pc-'+p,text:p+' ×'+n}))):null,
-    rulesPanel(),
-    planned?h('button',{class:'btn big',type:'button',onclick:()=>go('shop')},icon('cart',22),'Build shopping list'):null);
+    null);
 }
 const pl=(n,w)=>n+' '+w+(n===1?'':'s');
 function coverIdx(name){ let x=0; for(const ch of String(name)) x=(x*31+ch.codePointAt(0))>>>0; return x%6; }
